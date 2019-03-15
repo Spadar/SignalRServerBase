@@ -1,34 +1,53 @@
-﻿//Get jquery.signalR-2.3.0.js from the source project "Scripts" Folder. 
-//Save as SignalR in AL. 
-load_code("SignalR");
+﻿load_code("SignalR");
+game_log("Starting");
+class ALHub{
+	constructor(url, hubname){
+		this.url = url;
+		this.hubname = hubname;
+		
+		this.Connect(url, hubname);
+		
+	}
+	
+	Connect(){
+		let connection = $.hubConnection();
+		connection.url = this.url;
+		var hubClass = this;
+		
+		this.Proxy = connection.createHubProxy(this.hubname);
+		
+		connection.start().done(function() {
+			game_log("Connected");
+			hubClass.connected = true;
+			connection.disconnected(function(){
+				hubClass.connected = false;
+				game_log("Disconnected, reconnecting...");
+				setTimeout(function(){hubClass.Connect();}, 2500);
+			});
+			connection.reconnecting(function(){
+				hubClass.connected = false;
+				game_log("Lost connection to server... Waiting for response...");
+			});
+		}).fail(function(){
+			hubClass.connected = false;
+			game_log('Could not Connect!');
+			setTimeout(function(){hubClass.Connect();}, 2500); 
+		});
+	}
+}
 
-var connected = false;
-
-$.connection.hub.url = 'http://localhost:8080/signalr';
-
-var connection = $.hubConnection();
-
-connection.url = 'http://localhost:8080/signalr';
-
-var hubProxy = connection.createHubProxy('signalRServiceHub');
-
-connection.start().done(function () {
-    game_log("Connected");
-    connected = true;
-}).fail(function () {
-    game_log('Could not Connect!');
-});
+let hub = new ALHub('http://localhost:8080/signalr', 'signalRServiceHub');
 
 var lastPing;
-hubProxy.on('Pong', function (message) {
+hub.Proxy.on('Pong', function (message) {
     game_log("Server responded in " + (new Date() - lastPing) + "ms.");
     lastPing = null;
 });
 
 setInterval(function () {
-    if (connected) {
+    if (hub.connected) {
         if (lastPing == null) {
-            hubProxy.invoke('Ping');
+            hub.Proxy.invoke('Ping');
             lastPing = new Date();
         }
     }
