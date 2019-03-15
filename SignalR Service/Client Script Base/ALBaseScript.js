@@ -12,7 +12,7 @@ class ALHub{
 	Connect(){
 		let connection = $.hubConnection();
 		connection.url = this.url;
-		var hubClass = this;
+		let hubClass = this;
 		
 		this.Proxy = connection.createHubProxy(this.hubname);
 		
@@ -38,7 +38,7 @@ class ALHub{
 
 let hub = new ALHub('http://localhost:8080/signalr', 'signalRServiceHub');
 
-var lastPing;
+let lastPing;
 hub.Proxy.on('Pong', function (message) {
     game_log("Server responded in " + (new Date() - lastPing) + "ms.");
     lastPing = null;
